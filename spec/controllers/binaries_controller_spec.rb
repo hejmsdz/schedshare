@@ -1,6 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe BinariesController, type: :controller do
+  let(:user) { create(:user) }
 
   describe 'GET #index' do
     let(:action) { get :index }
@@ -14,8 +15,6 @@ RSpec.describe BinariesController, type: :controller do
 
     context 'with a valid token' do
       before { authenticate(user) }
-
-      let(:user) { create(:user) }
 
       it 'returns http success' do
         action
@@ -53,6 +52,40 @@ RSpec.describe BinariesController, type: :controller do
             expect(ids).to contain_exactly(matt_binary.id, new_alex_binary.id)
           end
         end
+      end
+    end
+  end
+
+  describe '#create' do
+    let(:params) { {} }
+    let(:action) { post :create, params: params }
+
+    context 'without an auth token' do
+      it 'returns http unauthorized' do
+        action
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
+    context 'with a valid token' do
+      before { authenticate(user) }
+
+      let(:new_binary) { build(:binary) }
+      let(:params) { { binary: { version: new_binary.version, file: new_binary.file } } }
+
+      it 'returns http created' do
+        action
+        expect(response).to have_http_status(:created)
+      end 
+
+      it 'creates a binary' do
+        expect { action }.to change(Binary, :count).by(1)
+        
+        binary = Binary.last
+
+        expect(binary.version).to eq(params[:binary][:version])
+        expect(binary.user).to eq(user)
+        expect(binary.file).to be_attached
       end
     end
   end
