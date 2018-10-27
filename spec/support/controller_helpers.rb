@@ -10,4 +10,8 @@ module ControllerHelpers
   def authenticate(user)
     request.headers.merge! auth_header(user)
   end
+
+  def json_response
+    JSON.parse(response.body)
+  end
 end
