@@ -1,6 +1,13 @@
+include ActionDispatch::TestProcess
+
 FactoryBot.define do
   factory :binary do
-    url { 'https://cdn.example.com/bin/d48cf51a' }
+    version { '0.1.0' }
     user
+
+    file do
+      path = Rails.root.join('spec', 'fixtures', 'binaries', 'hello_world')
+      fixture_file_upload(path, 'application/octet-stream')
+    end
   end
 end

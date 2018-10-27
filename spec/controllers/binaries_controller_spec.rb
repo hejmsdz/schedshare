@@ -30,7 +30,7 @@ RSpec.describe BinariesController, type: :controller do
         let(:matt_binary) { create(:binary, user: matt) }
         let(:alex_binary) { create(:binary, user: alex) }
 
-        let(:attributes) { %i(id url user_id version) }
+        let(:attributes) { %i(id user_id version) }
         let(:expected_response) do
           [ matt_binary, alex_binary ].map do |b|
             b.slice(*attributes).merge(created_at: b.created_at.as_json, updated_at: b.updated_at.as_json)
@@ -44,7 +44,7 @@ RSpec.describe BinariesController, type: :controller do
 
         context 'when there is more than one binary per user' do
           before { new_alex_binary }
-          
+
           let(:new_alex_binary) { create(:binary, user: alex) }
 
           it 'only shows the latest one' do

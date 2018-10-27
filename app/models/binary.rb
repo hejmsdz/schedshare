@@ -1,5 +1,4 @@
 class Binary < ApplicationRecord
   belongs_to :user
-
-  validates :url, presence: true, format: { with: URI::regexp(:https) }
+  has_one_attached :file
 end
