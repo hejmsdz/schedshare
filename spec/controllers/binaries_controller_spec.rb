@@ -1,10 +1,12 @@
 require 'rails_helper'
 
 RSpec.describe BinariesController, type: :controller do
+  render_views
+
   let(:user) { create(:user) }
 
   describe 'GET #index' do
-    let(:action) { get :index }
+    let(:action) { get :index, format: :json }
 
     context 'without an auth token' do
       it 'returns http unauthorized' do
@@ -21,35 +23,40 @@ RSpec.describe BinariesController, type: :controller do
         expect(response).to have_http_status(:success)
       end
 
-      context 'when there are binaries available' do
-        before { matt_binary; alex_binary }
+      context 'when there is a binary available' do
+        before { binary }
 
-        let(:matt) { create(:user) }
-        let(:alex) { create(:user) }
-        let(:matt_binary) { create(:binary, user: matt) }
-        let(:alex_binary) { create(:binary, user: alex) }
+        let(:binary) { create(:binary, user: user) }
 
-        let(:attributes) { %i(id user_id version) }
-        let(:expected_response) do
-          [ matt_binary, alex_binary ].map do |b|
-            b.slice(*attributes).merge(created_at: b.created_at.as_json, updated_at: b.updated_at.as_json)
-          end
+        it 'returns an array with item' do
+          action
+          expect(json_response).to be_an Array
+          expect(json_response.length).to eq(1)
         end
 
-        it 'returns the binaries' do
+        it 'contains information about the binary' do
           action
-          expect(json_response).to eq expected_response
+          hash = json_response.first
+          expect(hash).to include binary.slice(:id, :version, :user_id)
+          expect(hash['created_at']).to eq(binary.created_at.as_json)
+          expect(hash['checksum']).to eq(binary.file.checksum)
+          expect(get: hash['url']).to route_to(controller: 'active_storage/blobs',
+                                               action: 'show',
+                                               signed_id: binary.file.signed_id,
+                                               filename: binary.file.filename)
         end
 
         context 'when there is more than one binary per user' do
-          before { new_alex_binary }
+          before { new_binary; more_binaries }
 
-          let(:new_alex_binary) { create(:binary, user: alex) }
+          let(:new_binary) { create(:binary, user: user) }
+          let(:another_user) { create(:user) }
+          let(:more_binaries) { create_list(:binary, 2, user: another_user) }
 
-          it 'only shows the latest one' do
+          it 'only shows the latest one for each user' do
             action
             ids = json_response.map { |binary| binary['id'] }
-            expect(ids).to contain_exactly(matt_binary.id, new_alex_binary.id)
+            expect(ids).to contain_exactly(new_binary.id, more_binaries.last.id)
           end
         end
       end
