@@ -2,7 +2,7 @@ class BinariesController < ApplicationController
   before_action :authenticate_user
 
   def index
-    @binaries = User.includes(:binaries).all.map { |user| user.binaries.last }.compact
+    @binaries = Binary.latest_per_user.with_attached_file
   end
 
   def create
