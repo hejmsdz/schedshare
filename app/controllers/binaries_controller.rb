@@ -6,6 +6,7 @@ class BinariesController < ApplicationController
   end
 
   def create
+    return render plain: 'Dopiero teraz wrzucasz?', status: :unauthorized
     binary = Binary.create(binary_params)
     head :created
   end
